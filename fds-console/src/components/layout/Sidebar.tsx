@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, Bell, History, LayoutDashboard, Settings, ShieldCheck } from 'lucide-react';
+import { BarChart3, Bell, History, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const menuItems = [
@@ -13,10 +13,13 @@ const menuItems = [
 
 export const Sidebar: React.FC = () => (
   <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen sticky top-0">
-    <div className="p-6 border-b border-slate-800 flex items-center gap-3">
+    <NavLink
+      to="/"
+      className="p-6 border-b border-slate-800 flex items-center gap-3 hover:bg-slate-800/40 transition-colors"
+    >
       <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white">F</div>
       <h1 className="text-xl font-bold text-slate-100">FDS Console</h1>
-    </div>
+    </NavLink>
 
     <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
       <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">Menu</div>
@@ -40,13 +43,12 @@ export const Sidebar: React.FC = () => (
     <div className="p-4 border-t border-slate-800">
       <div className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
         <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
-          <span className="text-sm font-bold text-slate-300">AD</span>
+           <span className="text-sm font-bold text-slate-300">AD</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-slate-200 truncate">관리자</p>
           <p className="text-xs text-slate-500 truncate">Fraud analyst</p>
         </div>
-        <Settings className="w-4 h-4 text-slate-500" />
       </div>
     </div>
   </aside>

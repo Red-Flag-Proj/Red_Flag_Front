@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, CreditCard, Download, Filter, RefreshCw, Search, Send, Smartphone, Wallet } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useFdsStore } from '../store/useFdsStore';
@@ -16,16 +16,91 @@ const ChannelIcon = ({ channel }: { channel: Channel }) => {
   }
 };
 
+const transactionStatuses: TransactionStatus[] = [
+  'APPROVED',
+  'PENDING_REVIEW',
+  'REQUIRES_AUTH',
+  'CALL_REQUIRED',
+  'CALL_IN_PROGRESS',
+  'CALL_CONFIRMED',
+  'BLOCKED',
+  'CARD_SUSPENDED',
+];
+
+const riskLevels: RiskLevel[] = ['NORMAL', 'SUSPICIOUS', 'DANGER'];
+
+const statusLabels: Record<TransactionStatus, string> = {
+  APPROVED: '승인',
+  PENDING_REVIEW: '검토 대기',
+  REQUIRES_AUTH: '추가 인증',
+  CALL_REQUIRED: 'ARS 확인 대기',
+  CALL_IN_PROGRESS: 'ARS 진행 중',
+  CALL_CONFIRMED: 'ARS 본인 확인',
+  BLOCKED: '차단',
+  CARD_SUSPENDED: '카드 정지',
+};
+
+function getStatusFilter(value: string | null): 'ALL' | TransactionStatus {
+  return transactionStatuses.includes(value as TransactionStatus) ? value as TransactionStatus : 'ALL';
+}
+
+function getRiskFilter(value: string | null): 'ALL' | RiskLevel {
+  return riskLevels.includes(value as RiskLevel) ? value as RiskLevel : 'ALL';
+}
+
 const AlertQueuePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { transactions, isLoading, error, fetchTransactions } = useFdsStore();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | TransactionStatus>('ALL');
-  const [riskFilter, setRiskFilter] = useState<'ALL' | RiskLevel>('ALL');
+  const urlSearchTerm = searchParams.get('search') ?? '';
+  const urlStatusFilter = getStatusFilter(searchParams.get('status'));
+  const urlRiskFilter = getRiskFilter(searchParams.get('risk'));
+  const [searchTerm, setSearchTerm] = useState(urlSearchTerm);
+  const [statusFilter, setStatusFilter] = useState<'ALL' | TransactionStatus>(urlStatusFilter);
+  const [riskFilter, setRiskFilter] = useState<'ALL' | RiskLevel>(urlRiskFilter);
 
   React.useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
+
+  React.useEffect(() => {
+    setSearchTerm(urlSearchTerm);
+    setStatusFilter(urlStatusFilter);
+    setRiskFilter(urlRiskFilter);
+  }, [urlRiskFilter, urlSearchTerm, urlStatusFilter]);
+
+  const updateFilterParam = (key: string, value: string) => {
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    if (value === 'ALL' || !value.trim()) {
+      nextSearchParams.delete(key);
+    } else {
+      nextSearchParams.set(key, value);
+    }
+
+    setSearchParams(nextSearchParams, { replace: true });
+  };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextSearchTerm = event.target.value;
+
+    setSearchTerm(nextSearchTerm);
+    updateFilterParam('search', nextSearchTerm);
+  };
+
+  const handleStatusFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextStatusFilter = event.target.value as 'ALL' | TransactionStatus;
+
+    setStatusFilter(nextStatusFilter);
+    updateFilterParam('status', nextStatusFilter);
+  };
+
+  const handleRiskFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextRiskFilter = event.target.value as 'ALL' | RiskLevel;
+
+    setRiskFilter(nextRiskFilter);
+    updateFilterParam('risk', nextRiskFilter);
+  };
 
   const filteredTransactions = transactions.filter((item) => {
     const query = searchTerm.toLowerCase();
@@ -64,19 +139,18 @@ const AlertQueuePage: React.FC = () => {
             placeholder="거래 ID 또는 사용자 검색"
             className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500/50 transition-all text-slate-200"
             value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-slate-500" />
-          <select className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-slate-200" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
+          <select className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-slate-200" value={statusFilter} onChange={handleStatusFilterChange}>
             <option value="ALL">전체 상태</option>
-            <option value="APPROVED">승인</option>
-            <option value="PENDING_REVIEW">검토 대기</option>
-            <option value="REQUIRES_AUTH">추가 인증</option>
-            <option value="BLOCKED">차단</option>
+            {transactionStatuses.map((status) => (
+              <option key={status} value={status}>{statusLabels[status]}</option>
+            ))}
           </select>
-          <select className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-slate-200" value={riskFilter} onChange={(event) => setRiskFilter(event.target.value as typeof riskFilter)}>
+          <select className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-slate-200" value={riskFilter} onChange={handleRiskFilterChange}>
             <option value="ALL">전체 위험도</option>
             <option value="NORMAL">정상</option>
             <option value="SUSPICIOUS">의심</option>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { History, RefreshCw, Search, Settings2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { History, RefreshCw, RotateCcw, Search, ToggleLeft, ToggleRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useFdsStore } from '../store/useFdsStore';
 
@@ -7,7 +7,8 @@ const categories = ['전체', '금액', '빈도', '위치', '시간', '행동', 
 
 const PolicyManagementPage: React.FC = () => {
   const { rules, error, isLoading, fetchRules, toggleRule } = useFdsStore();
-  const [selectedCategory, setSelectedCategory] = useState('전체');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
 
@@ -15,7 +16,40 @@ const PolicyManagementPage: React.FC = () => {
     fetchRules();
   }, [fetchRules]);
 
-  const filteredRules = rules.filter((rule) => selectedCategory === '전체' || rule.category === selectedCategory);
+  const filteredRules = rules.filter((rule) => {
+    const query = searchTerm.trim().toLowerCase();
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(rule.category);
+    const matchesSearch = !query || [
+      rule.id,
+      rule.code,
+      rule.category,
+      rule.condition,
+      rule.deploymentStatus,
+      rule.lastModifiedBy,
+    ].some((value) => String(value ?? '').toLowerCase().includes(query));
+
+    return matchesCategory && matchesSearch;
+  });
+
+  const toggleCategory = (category: string) => {
+    if (category === '전체') {
+      setSelectedCategories([]);
+      return;
+    }
+
+    setSelectedCategories((current) =>
+      current.includes(category)
+        ? current.filter((item) => item !== category)
+        : [...current, category]
+    );
+  };
+
+  const resetFilters = () => {
+    setSelectedCategories([]);
+    setSearchTerm('');
+  };
+
+  const hasActiveFilters = selectedCategories.length > 0 || searchTerm.trim().length > 0;
 
   const confirmToggle = async () => {
     if (!selectedRuleId || !reason.trim()) return;
@@ -51,10 +85,12 @@ const PolicyManagementPage: React.FC = () => {
             {categories.map((category) => (
               <button
                 key={category}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => toggleCategory(category)}
                 className={clsx(
                   'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all',
-                  selectedCategory === category ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700'
+                  (category === '전체' ? selectedCategories.length === 0 : selectedCategories.includes(category))
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700'
                 )}
               >
                 {category}
@@ -64,10 +100,22 @@ const PolicyManagementPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input type="text" placeholder="규칙 검색" className="bg-slate-800 border border-slate-700 rounded-lg py-1.5 pl-9 pr-4 text-xs text-slate-200 focus:outline-none focus:border-blue-500/50" />
+              <input
+                type="text"
+                placeholder="규칙 검색"
+                className="bg-slate-800 border border-slate-700 rounded-lg py-1.5 pl-9 pr-4 text-xs text-slate-200 focus:outline-none focus:border-blue-500/50"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
             </div>
-            <button className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-slate-200">
-              <Settings2 className="w-4 h-4" />
+            <button
+              type="button"
+              onClick={resetFilters}
+              disabled={!hasActiveFilters}
+              aria-label="필터 초기화"
+              className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-slate-200 disabled:opacity-40 disabled:hover:text-slate-400"
+            >
+              <RotateCcw className="w-4 h-4" />
             </button>
           </div>
         </div>

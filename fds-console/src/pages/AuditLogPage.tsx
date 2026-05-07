@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Activity, Download, FileText, Search, User } from 'lucide-react';
+import { Activity, FileText, RefreshCw, Search, User } from 'lucide-react';
 import { useFdsStore } from '../store/useFdsStore';
 
 const AuditLogPage: React.FC = () => {
-  const { auditLogs, fetchDashboard } = useFdsStore();
+  const { auditLogs, fetchDashboard, isLoading } = useFdsStore();
   const [searchTerm, setSearchTerm] = useState('');
 
   React.useEffect(() => {
@@ -23,7 +23,7 @@ const AuditLogPage: React.FC = () => {
           <p className="text-slate-500 text-sm">자동 조치와 관리자 승인/보류/차단 이력을 추적합니다.</p>
         </div>
         <button onClick={() => fetchDashboard()} className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg border border-slate-700 hover:bg-slate-700 text-sm">
-          <Download className="w-4 h-4" />
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           새로고침
         </button>
       </div>
