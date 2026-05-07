@@ -23,6 +23,7 @@ const emptyStats: DashboardStats = {
   highRiskCount: 0,
   blockedCount: 0,
   challengeCount: 0,
+  arsPendingCount: 0,
   avgRiskScore: 0,
   p95Latency: 0,
   normalCount: 0,

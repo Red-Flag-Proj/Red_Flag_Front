@@ -82,6 +82,8 @@ interface BackendCallVerification {
   customer_ref?: string;
   phone_number?: string;
   call_status: string;
+  ars_prompt?: string;
+  ars_result?: 'CONFIRMED' | 'DENIED' | 'NO_RESPONSE';
   memo?: string;
   verified_at?: string;
   created_at: string;
@@ -95,14 +97,14 @@ function toChannel(type: BackendTransaction['type']): TransactionAlert['channel'
 }
 
 function recommendedAction(status: TransactionAlert['status']) {
-  const labels = {
+  const labels: Record<TransactionAlert['status'], string> = {
     APPROVED: '자동 승인',
-    PENDING_REVIEW: '관리자 검토',
+    PENDING_REVIEW: '고객 미확인 보류',
     REQUIRES_AUTH: '추가 인증 요청',
-    CALL_REQUIRED: '전화 확인 필요',
-    CALL_IN_PROGRESS: '전화 확인 진행',
-    CALL_CONFIRMED: '전화 확인 완료',
-    BLOCKED: '거래 차단',
+    CALL_REQUIRED: 'AI 이상탐지 ARS 확인 대기',
+    CALL_IN_PROGRESS: 'ARS 확인 진행 중',
+    CALL_CONFIRMED: 'ARS 1번 본인 확인',
+    BLOCKED: 'ARS 2번 또는 위험 차단',
     CARD_SUSPENDED: '카드 임시 정지',
   };
   return labels[status];
@@ -145,6 +147,8 @@ function mapCallVerification(row: BackendCallVerification): CallVerification {
     customerRef: row.customer_ref || '-',
     phoneNumber: row.phone_number || '-',
     callStatus: row.call_status,
+    arsPrompt: row.ars_prompt || '',
+    arsResult: row.ars_result,
     memo: row.memo || '',
     verifiedAt: row.verified_at ? new Date(row.verified_at).toLocaleString('ko-KR', { hour12: false }) : undefined,
     createdAt: new Date(row.created_at).toLocaleString('ko-KR', { hour12: false }),
@@ -261,11 +265,12 @@ export const fdsService = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     await ensureAuth();
     const data = await request<{ stats: Record<string, number | string> }>('/admin/stats');
+    const arsPendingCount = Number(data.stats.call_required_count ?? 0);
     return {
       totalEvaluated: Number(data.stats.total_transactions),
       highRiskCount: Number(data.stats.risky_transactions),
       blockedCount: Number(data.stats.blocked_count),
-      challengeCount: Number(data.stats.requires_auth_count),
+      challengeCount: Number(data.stats.requires_auth_count) + arsPendingCount,
       avgRiskScore: Number(data.stats.average_risk_score),
       p95Latency: 128,
       normalCount: Number(data.stats.normal_count),
@@ -273,6 +278,7 @@ export const fdsService = {
       dangerCount: Number(data.stats.danger_count),
       approvedCount: Number(data.stats.approved_count),
       pendingReviewCount: Number(data.stats.pending_review_count),
+      arsPendingCount,
     };
   },
 

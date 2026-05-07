@@ -40,6 +40,8 @@ export interface CallVerification {
   customerRef: string;
   phoneNumber: string;
   callStatus: string;
+  arsPrompt: string;
+  arsResult?: 'CONFIRMED' | 'DENIED' | 'NO_RESPONSE';
   memo: string;
   verifiedAt?: string;
   createdAt: string;
@@ -103,6 +105,7 @@ export interface DashboardStats {
   highRiskCount: number;
   blockedCount: number;
   challengeCount: number;
+  arsPendingCount: number;
   avgRiskScore: number;
   p95Latency: number;
   normalCount: number;

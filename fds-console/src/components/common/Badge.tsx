@@ -43,11 +43,11 @@ export const StatusBadge: React.FC<{ status: TransactionStatus }> = ({ status })
 
   const labels: Record<TransactionStatus, string> = {
     APPROVED: '승인',
-    PENDING_REVIEW: '검토 대기',
+    PENDING_REVIEW: '보류',
     REQUIRES_AUTH: '추가 인증',
-    CALL_REQUIRED: '전화 확인 필요',
-    CALL_IN_PROGRESS: '전화 중',
-    CALL_CONFIRMED: '전화 확인 완료',
+    CALL_REQUIRED: 'ARS 확인 대기',
+    CALL_IN_PROGRESS: 'ARS 진행 중',
+    CALL_CONFIRMED: 'ARS 본인 확인',
     BLOCKED: '차단',
     CARD_SUSPENDED: '카드 정지',
   };
