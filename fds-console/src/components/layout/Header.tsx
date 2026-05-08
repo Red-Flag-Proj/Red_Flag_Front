@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Clock, Search, User } from 'lucide-react';
+import { Bell, Clock, LogOut, Search, User } from 'lucide-react';
+import { logout } from '../../services/fdsService';
 import { useFdsStore } from '../../store/useFdsStore';
 
 const formatNow = () =>
@@ -16,7 +17,13 @@ const formatNow = () =>
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
-  const { stats, transactions, fetchDashboard } = useFdsStore();
+  const { stats, transactions, fetchDashboard, currentUser, clearAuth } = useFdsStore();
+
+  const handleLogout = () => {
+    logout();
+    clearAuth();
+    navigate('/login', { replace: true });
+  };
   const [now, setNow] = React.useState(formatNow);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false);
@@ -82,21 +89,21 @@ export const Header: React.FC = () => {
       description: '관리자 확인이 필요한 거래',
       count: pendingReviewCount,
       path: '/alerts?status=PENDING_REVIEW',
-      tone: 'text-indigo-300 bg-indigo-500/10 border-indigo-500/20',
+      tone: 'fds-badge-blue',
     },
     {
       label: '위험 거래',
       description: '위험 등급으로 분류된 거래',
       count: dangerCount,
       path: '/alerts?risk=DANGER',
-      tone: 'text-red-300 bg-red-500/10 border-red-500/20',
+      tone: 'fds-badge-danger',
     },
     {
       label: 'ARS 확인 대기',
       description: '고객 본인 확인이 필요한 거래',
       count: arsPendingCount,
       path: '/alerts?status=CALL_REQUIRED',
-      tone: 'text-amber-300 bg-amber-500/10 border-amber-500/20',
+      tone: 'fds-badge-suspicious',
     },
   ];
 
@@ -106,60 +113,60 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-16 bg-slate-900/50 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-8 sticky top-0 z-30">
-      <div className="flex items-center gap-4 flex-1 max-w-xl">
-        <form className="relative w-full" onSubmit={handleSearchSubmit}>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+    <header className="fds-header">
+      <div className="fds-header-search">
+        <form className="fds-search" onSubmit={handleSearchSubmit}>
+          <Search className="fds-search-icon" />
           <input
             type="text"
             placeholder="거래 ID 또는 사용자 검색"
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500/50 text-slate-200 placeholder:text-slate-500"
+            className="fds-input has-icon"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
           />
         </form>
       </div>
 
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2 text-slate-400 text-sm border-r border-slate-800 pr-6">
+      <div className="fds-header-actions">
+        <div className="fds-row fds-clock fds-header-clock">
           <Clock className="w-4 h-4" />
-          <span className="font-mono">{now}</span>
+          <span>{now}</span>
         </div>
         <div className="relative" ref={notificationRef}>
           <button
             type="button"
-            className="relative p-2 text-slate-400 hover:text-slate-200"
+            className="fds-icon-btn"
             aria-label="알림"
             aria-expanded={isNotificationsOpen}
             onClick={() => setIsNotificationsOpen((value) => !value)}
           >
             <Bell className="w-5 h-5" />
             {notificationCount > 0 && (
-              <span className="absolute -top-0.5 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-slate-900 flex items-center justify-center">
+              <span className="fds-notification-count">
                 {notificationCount > 99 ? '99+' : notificationCount}
               </span>
             )}
           </button>
 
           {isNotificationsOpen && (
-            <div className="absolute right-0 top-12 w-80 rounded-lg border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-800">
-                <p className="text-sm font-bold text-slate-100">알림</p>
-                <p className="text-xs text-slate-500 mt-0.5">확인이 필요한 거래를 빠르게 필터링합니다.</p>
+            <div className="fds-notification-popover">
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-dim)' }}>
+                <p className="fds-notification-title">알림 센터</p>
+                <p className="fds-page-copy" style={{ marginTop: 4 }}>확인이 필요한 거래를 빠르게 필터링합니다.</p>
               </div>
-              <div className="p-2">
+              <div style={{ padding: 8 }}>
                 {notificationItems.map((item) => (
                   <button
                     key={item.label}
                     type="button"
                     onClick={() => handleNotificationClick(item.path)}
-                    className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-3 text-left hover:bg-slate-800/70 transition-colors"
+                    className="w-full flex items-center justify-between gap-3 px-3 py-3 text-left transition-colors hover:bg-white/[0.03]"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-200">{item.label}</p>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">{item.description}</p>
+                      <p style={{ margin: 0, color: 'var(--text-high)', fontSize: 13, fontWeight: 600 }}>{item.label}</p>
+                      <p className="truncate" style={{ margin: '4px 0 0', color: 'var(--text-dim)', fontSize: 11 }}>{item.description}</p>
                     </div>
-                    <span className={`min-w-9 h-7 px-2 rounded-full border text-xs font-bold flex items-center justify-center ${item.tone}`}>
+                    <span className={`fds-badge ${item.tone}`}>
                       {item.count}
                     </span>
                   </button>
@@ -168,21 +175,36 @@ export const Header: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleNotificationClick('/alerts')}
-                className="w-full px-4 py-3 border-t border-slate-800 text-sm font-semibold text-blue-400 hover:bg-slate-800/70 text-left"
+                className="w-full px-4 py-3 border-t border-white/[0.04] text-left text-[12px] font-semibold text-[var(--red-vivid)] hover:bg-white/[0.03]"
               >
                 전체 의심 거래 보기
               </button>
             </div>
           )}
         </div>
-        <div className="flex items-center gap-3 pl-2">
-          <div className="text-right">
-            <p className="text-sm font-medium text-slate-200">Admin</p>
-            <p className="text-[10px] text-slate-500 uppercase">Analyst</p>
+        <div className="fds-row">
+          <div className="fds-user-chip">
+            <div className="fds-user-copy">
+              <p className="fds-user-name">
+                {currentUser?.username ?? currentUser?.email ?? 'Admin'}
+              </p>
+              <p className="fds-user-role">
+                {currentUser?.role ?? 'Analyst'}
+              </p>
+            </div>
+            <div className="fds-user-avatar" aria-hidden="true">
+              <User className="w-4 h-4" />
+            </div>
           </div>
-          <div className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center">
-            <User className="w-4 h-4 text-slate-300" />
-          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="fds-icon-btn"
+            aria-label="로그아웃"
+            title="로그아웃"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </header>

@@ -8,16 +8,16 @@ interface BadgeProps {
 }
 
 export const Badge: React.FC<BadgeProps> = ({ children, className }) => (
-  <span className={clsx('px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap', className)}>
+  <span className={clsx('fds-badge', className)}>
     {children}
   </span>
 );
 
 export const RiskBadge: React.FC<{ level: RiskLevel }> = ({ level }) => {
   const styles: Record<RiskLevel, string> = {
-    NORMAL: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    SUSPICIOUS: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    DANGER: 'bg-red-500/10 text-red-400 border-red-500/20',
+    NORMAL: 'fds-badge-normal',
+    SUSPICIOUS: 'fds-badge-suspicious',
+    DANGER: 'fds-badge-danger',
   };
 
   const labels: Record<RiskLevel, string> = {
@@ -31,14 +31,14 @@ export const RiskBadge: React.FC<{ level: RiskLevel }> = ({ level }) => {
 
 export const StatusBadge: React.FC<{ status: TransactionStatus }> = ({ status }) => {
   const styles: Record<TransactionStatus, string> = {
-    APPROVED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    PENDING_REVIEW: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    REQUIRES_AUTH: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-    CALL_REQUIRED: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    CALL_IN_PROGRESS: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    CALL_CONFIRMED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    BLOCKED: 'bg-red-500/10 text-red-400 border-red-500/20',
-    CARD_SUSPENDED: 'bg-red-500/10 text-red-400 border-red-500/20',
+    APPROVED: 'fds-badge-normal',
+    PENDING_REVIEW: 'fds-badge-blue',
+    REQUIRES_AUTH: 'fds-badge-blue',
+    CALL_REQUIRED: 'fds-badge-suspicious',
+    CALL_IN_PROGRESS: 'fds-badge-blue fds-badge-pulse',
+    CALL_CONFIRMED: 'fds-badge-normal',
+    BLOCKED: 'fds-badge-danger',
+    CARD_SUSPENDED: 'fds-badge-danger',
   };
 
   const labels: Record<TransactionStatus, string> = {

@@ -1,14 +1,15 @@
-import { Download, FileText, Table } from 'lucide-react';
+import { Download, FileText, Table, type LucideIcon } from 'lucide-react';
 import { fdsService } from '../services/fdsService';
 
 const ReportsPage: React.FC = () => (
-  <div className="space-y-8 animate-in fade-in duration-500">
+  <div className="fds-page-stack">
     <div>
-      <h2 className="text-2xl font-bold text-slate-100">리포트</h2>
-      <p className="text-slate-500 text-sm">탐지 결과와 조치 상태를 CSV 또는 PDF로 다운로드합니다.</p>
+      {/* <p className="fds-kicker">// 리포트</p> */}
+      <h2 className="fds-page-title">리포트</h2>
+      <p className="fds-page-copy">탐지 결과와 조치 상태를 CSV 또는 PDF로 다운로드합니다.</p>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       <ReportCard
         icon={Table}
         title="CSV 리포트"
@@ -27,14 +28,14 @@ const ReportsPage: React.FC = () => (
   </div>
 );
 
-const ReportCard = ({ icon: Icon, title, description, buttonLabel, onClick }: { icon: any; title: string; description: string; buttonLabel: string; onClick: () => void }) => (
-  <div className="fds-card p-6">
-    <div className="w-12 h-12 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center mb-5">
+const ReportCard = ({ icon: Icon, title, description, buttonLabel, onClick }: { icon: LucideIcon; title: string; description: string; buttonLabel: string; onClick: () => void }) => (
+  <div className="fds-card fds-card-pad" style={{ borderTop: '2px solid var(--red-vivid)' }}>
+    <div className="w-12 h-12 rounded-[3px] border border-[rgba(255,44,61,0.22)] bg-[rgba(255,44,61,0.08)] text-[var(--red-vivid)] flex items-center justify-center mb-5">
       <Icon className="w-6 h-6" />
     </div>
-    <h3 className="text-lg font-bold text-slate-100">{title}</h3>
-    <p className="text-sm text-slate-500 mt-2 min-h-16">{description}</p>
-    <button onClick={onClick} className="mt-6 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-500">
+    <h3 className="fds-panel-title">{title}</h3>
+    <p className="fds-panel-subtitle min-h-16">{description}</p>
+    <button onClick={onClick} className="fds-btn fds-btn-primary mt-6">
       <Download className="w-4 h-4" />
       {buttonLabel}
     </button>

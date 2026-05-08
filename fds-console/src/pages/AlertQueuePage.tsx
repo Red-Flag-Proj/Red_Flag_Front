@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronRight, CreditCard, Download, Filter, RefreshCw, Search, Send, Smartphone, Wallet } from 'lucide-react';
+import { ChevronRight, CreditCard, Download, Filter, PhoneCall, RefreshCw, Search, Send, Smartphone, Wallet } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useFdsStore } from '../store/useFdsStore';
 import { fdsService } from '../services/fdsService';
@@ -111,101 +111,123 @@ const AlertQueuePage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="fds-page-stack">
+      <div className="fds-page-head">
         <div>
-          <h2 className="text-2xl font-bold text-slate-100">의심 거래 큐</h2>
-          <p className="text-slate-500 text-sm">위험 점수와 조치 상태를 기준으로 검토할 거래를 확인합니다.</p>
+          {/* <p className="fds-kicker">// 의심 거래 큐</p> */}
+          <h2 className="fds-page-title">의심 거래 큐</h2>
+          <p className="fds-page-copy">위험 점수와 조치 상태를 기준으로 검토할 거래를 확인합니다.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={fetchTransactions} className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-slate-300 rounded-lg border border-slate-700 hover:bg-slate-700 text-sm">
+        <div className="fds-row">
+          <button onClick={fetchTransactions} className="fds-btn fds-btn-ghost">
             <RefreshCw className={clsx('w-4 h-4', isLoading && 'animate-spin')} />
             새로고침
           </button>
-          <button onClick={() => fdsService.downloadReport('csv')} className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-slate-300 rounded-lg border border-slate-700 hover:bg-slate-700 text-sm">
+          <button onClick={() => fdsService.downloadReport('csv')} className="fds-btn fds-btn-danger">
             <Download className="w-4 h-4" />
             CSV
           </button>
         </div>
       </div>
 
-      {error && <div className="p-4 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-300">{error}</div>}
+      {error && <div className="fds-error">{error}</div>}
 
-      <div className="fds-card p-4 bg-slate-900/50 flex flex-wrap items-center gap-4">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+      <div className="fds-card fds-card-pad">
+        <div className="fds-form-row">
+        <div className="fds-search">
+          <Search className="fds-search-icon" />
           <input
             type="text"
             placeholder="거래 ID 또는 사용자 검색"
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500/50 transition-all text-slate-200"
+            className="fds-input has-icon"
             value={searchTerm}
             onChange={handleSearchChange}
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-500" />
-          <select className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-slate-200" value={statusFilter} onChange={handleStatusFilterChange}>
+        <div className="fds-row">
+          <Filter className="w-4 h-4 fds-dim" />
+          <select className="fds-select" value={statusFilter} onChange={handleStatusFilterChange}>
             <option value="ALL">전체 상태</option>
             {transactionStatuses.map((status) => (
               <option key={status} value={status}>{statusLabels[status]}</option>
             ))}
           </select>
-          <select className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-slate-200" value={riskFilter} onChange={handleRiskFilterChange}>
+          <select className="fds-select" value={riskFilter} onChange={handleRiskFilterChange}>
             <option value="ALL">전체 위험도</option>
             <option value="NORMAL">정상</option>
             <option value="SUSPICIOUS">의심</option>
             <option value="DANGER">위험</option>
           </select>
         </div>
+        <span className="fds-kicker" style={{ margin: 0, marginLeft: 'auto', color: 'var(--text-low)' }}>
+          {filteredTransactions.length} / {transactions.length} 건
+        </span>
+        </div>
       </div>
 
       <div className="fds-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="fds-table-wrap">
+          <table className="fds-table">
             <thead>
-              <tr className="bg-slate-900/80 border-b border-slate-700 text-slate-500 text-xs font-semibold uppercase tracking-wider">
-                <th className="py-4 px-4">거래 ID / 시간</th>
-                <th className="py-4 px-4">사용자</th>
-                <th className="py-4 px-4">채널 / 위치</th>
-                <th className="py-4 px-4">금액</th>
-                <th className="py-4 px-4">점수</th>
-                <th className="py-4 px-4">위험도</th>
-                <th className="py-4 px-4">상태</th>
-                <th className="py-4 px-4"></th>
+              <tr>
+                <th>거래 ID / 시간</th>
+                <th>사용자</th>
+                <th>채널 / 위치</th>
+                <th>금액</th>
+                <th>점수</th>
+                <th>위험도</th>
+                <th>상태</th>
+                <th></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody>
               {filteredTransactions.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-800/40 transition-all cursor-pointer group" onClick={() => navigate(`/alerts/${item.id}`)}>
-                  <td className="py-4 px-4">
-                    <span className="block font-mono text-blue-400 font-medium">{item.id.slice(0, 8)}</span>
-                    <span className="text-[10px] text-slate-500">{item.occurredAt}</span>
+                <tr key={item.id} className="cursor-pointer group" onClick={() => navigate(`/alerts/${item.id}`)}>
+                  <td>
+                    <span className="block fds-code">{item.id.slice(0, 8).toUpperCase()}</span>
+                    <span className="text-[10px] fds-dim">{item.occurredAt}</span>
                   </td>
-                  <td className="py-4 px-4 text-sm text-slate-300">{item.customerId}</td>
-                  <td className="py-4 px-4">
+                  <td>{item.customerId.toUpperCase()}</td>
+                  <td>
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-slate-800 rounded text-slate-400"><ChannelIcon channel={item.channel} /></div>
-                      <span className="text-sm text-slate-400">{item.countryCode} / {item.city}</span>
+                      <div className="fds-icon-btn" style={{ width: 28, height: 28 }}><ChannelIcon channel={item.channel} /></div>
+                      <span className="fds-muted">{item.countryCode.toUpperCase()} / {item.city}</span>
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-sm font-semibold text-slate-200">{item.amount.toLocaleString()}원</td>
-                  <td className="py-4 px-4">
+                  <td style={{ color: 'var(--text-high)', fontWeight: 600 }}>{item.amount.toLocaleString()}원</td>
+                  <td>
                     <div className="flex items-center gap-3 w-32">
-                      <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                        <div className={clsx('h-full rounded-full', item.riskScore >= 61 ? 'bg-red-500' : item.riskScore >= 31 ? 'bg-amber-500' : 'bg-emerald-500')} style={{ width: `${Math.min(item.riskScore, 100)}%` }} />
+                      <div className="fds-gauge flex-1">
+                        <div
+                          className="fds-gauge-fill"
+                          style={{
+                            width: `${Math.min(item.riskScore, 100)}%`,
+                            background: item.riskScore >= 61 ? 'var(--red-vivid)' : item.riskScore >= 31 ? 'var(--amber)' : 'var(--green)',
+                          }}
+                        />
                       </div>
-                      <span className="text-xs font-mono font-bold text-slate-300">{item.riskScore}</span>
+                      <span className="fds-code" style={{ color: 'var(--text-mid)' }}>{item.riskScore}</span>
                     </div>
                   </td>
-                  <td className="py-4 px-4"><RiskBadge level={item.riskLevel} /></td>
-                  <td className="py-4 px-4"><StatusBadge status={item.status} /></td>
-                  <td className="py-4 px-4 text-right"><ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-400" /></td>
+                  <td><RiskBadge level={item.riskLevel} /></td>
+                  <td>
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={item.status} />
+                      {(item.status === 'CALL_REQUIRED' || item.status === 'CALL_IN_PROGRESS') && (
+                        <span className="fds-badge fds-badge-suspicious fds-badge-pulse flex items-center gap-1">
+                          <PhoneCall className="w-3 h-3" />
+                          ARS
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="text-right"><ChevronRight className="w-5 h-5 fds-dim group-hover:text-[var(--red-vivid)]" /></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {filteredTransactions.length === 0 && <div className="p-12 text-center text-slate-500 text-sm">조건에 맞는 거래가 없습니다.</div>}
+        {filteredTransactions.length === 0 && <div className="fds-empty">// 표시할 데이터가 없습니다</div>}
       </div>
     </div>
   );

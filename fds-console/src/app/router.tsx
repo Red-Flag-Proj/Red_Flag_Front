@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Header } from '../components/layout/Header';
 import DashboardPage from '../pages/DashboardPage';
@@ -7,13 +7,20 @@ import TransactionDetailPage from '../pages/TransactionDetailPage';
 import PolicyManagementPage from '../pages/PolicyManagementPage';
 import AuditLogPage from '../pages/AuditLogPage';
 import ReportsPage from '../pages/ReportsPage';
+import LoginPage from '../pages/LoginPage';
+
+function ProtectedRoute() {
+  const token = localStorage.getItem('fds_token');
+  if (!token) return <Navigate to="/login" replace />;
+  return <Outlet />;
+}
 
 const Layout = () => (
-  <div className="flex min-h-screen bg-[#0f172a]">
+  <div className="fds-shell">
     <Sidebar />
-    <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <div className="fds-content">
       <Header />
-      <main className="flex-1 overflow-y-auto p-8">
+      <main className="fds-main">
         <Outlet />
       </main>
     </div>
@@ -22,15 +29,24 @@ const Layout = () => (
 
 export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <Layout />,
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
+    element: <ProtectedRoute />,
     children: [
-      { index: true, element: <DashboardPage /> },
-      { path: 'alerts', element: <AlertQueuePage /> },
-      { path: 'alerts/:id', element: <TransactionDetailPage /> },
-      { path: 'policy', element: <PolicyManagementPage /> },
-      { path: 'audit', element: <AuditLogPage /> },
-      { path: 'reports', element: <ReportsPage /> },
-    ]
-  }
+      {
+        path: '/',
+        element: <Layout />,
+        children: [
+          { index: true, element: <DashboardPage /> },
+          { path: 'alerts', element: <AlertQueuePage /> },
+          { path: 'alerts/:id', element: <TransactionDetailPage /> },
+          { path: 'policy', element: <PolicyManagementPage /> },
+          { path: 'audit', element: <AuditLogPage /> },
+          { path: 'reports', element: <ReportsPage /> },
+        ],
+      },
+    ],
+  },
 ]);

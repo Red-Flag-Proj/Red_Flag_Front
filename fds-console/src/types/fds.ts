@@ -45,6 +45,7 @@ export interface CallVerification {
   memo: string;
   verifiedAt?: string;
   createdAt: string;
+  twilioCallSid?: string;
 }
 
 export interface TransactionAlert {

@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import type { AdminAction, AuditLog, DashboardStats, PolicyRule, TransactionAlert } from '../types/fds';
-import { fdsService } from '../services/fdsService';
+import { fdsService, fetchTransactionSilent } from '../services/fdsService';
+
+interface CurrentUser {
+  id: string;
+  email: string;
+  username: string;
+  role: string;
+}
 
 interface FdsState {
   transactions: TransactionAlert[];
@@ -10,12 +17,19 @@ interface FdsState {
   stats: DashboardStats;
   isLoading: boolean;
   error?: string;
+  arsPollingId: number | null;
+  currentUser: CurrentUser | null;
+  isAuthenticated: boolean;
   fetchDashboard: () => Promise<void>;
   fetchTransactions: () => Promise<void>;
   fetchTransactionDetail: (id: string) => Promise<void>;
   fetchRules: () => Promise<void>;
   applyAdminAction: (id: string, action: AdminAction, memo: string) => Promise<void>;
   toggleRule: (id: string, reason: string) => Promise<void>;
+  startArsPolling: (transactionId: string) => void;
+  stopArsPolling: () => void;
+  setCurrentUser: (user: CurrentUser) => void;
+  clearAuth: () => void;
 }
 
 const emptyStats: DashboardStats = {
@@ -48,12 +62,15 @@ function actionLogsToAuditLogs(transaction: TransactionAlert): AuditLog[] {
   }));
 }
 
-export const useFdsStore = create<FdsState>((set) => ({
+export const useFdsStore = create<FdsState>((set, get) => ({
   transactions: [],
   rules: [],
   auditLogs: [],
   stats: emptyStats,
   isLoading: false,
+  arsPollingId: null,
+  currentUser: null,
+  isAuthenticated: !!localStorage.getItem('fds_token'),
 
   fetchDashboard: async () => {
     set({ isLoading: true, error: undefined });
@@ -147,5 +164,41 @@ export const useFdsStore = create<FdsState>((set) => ({
     } catch (error) {
       set({ error: error instanceof Error ? error.message : '정책 변경 실패', isLoading: false });
     }
+  },
+
+  startArsPolling: (transactionId: string) => {
+    const existingId = get().arsPollingId;
+    if (existingId !== null) clearInterval(existingId);
+
+    const intervalId = setInterval(async () => {
+      const transaction = await fetchTransactionSilent(transactionId);
+      if (!transaction) return;
+
+      set((state) => ({
+        selectedTransaction: transaction,
+        transactions: state.transactions.map((item) => (item.id === transactionId ? transaction : item)),
+      }));
+
+      if (transaction.status !== 'CALL_REQUIRED' && transaction.status !== 'CALL_IN_PROGRESS') {
+        clearInterval(intervalId);
+        set({ arsPollingId: null });
+      }
+    }, 3000) as unknown as number;
+
+    set({ arsPollingId: intervalId });
+  },
+
+  stopArsPolling: () => {
+    const id = get().arsPollingId;
+    if (id !== null) clearInterval(id);
+    set({ arsPollingId: null });
+  },
+
+  setCurrentUser: (user) => {
+    set({ currentUser: user, isAuthenticated: true });
+  },
+
+  clearAuth: () => {
+    set({ currentUser: null, isAuthenticated: false });
   },
 }));

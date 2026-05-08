@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { History, RefreshCw, RotateCcw, Search, ToggleLeft, ToggleRight } from 'lucide-react';
+import { History, RefreshCw, RotateCcw, Search } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useFdsStore } from '../store/useFdsStore';
 
@@ -59,51 +59,52 @@ const PolicyManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between gap-4">
+    <div className="fds-page-stack">
+      <div className="fds-page-head">
         <div>
-          <h2 className="text-2xl font-bold text-slate-100">정책 관리</h2>
-          <p className="text-slate-500 text-sm">DB에 저장된 탐지 규칙을 조회하고 활성화 상태를 변경합니다.</p>
+          {/* <p className="fds-kicker">// 정책 관리</p> */}
+          <h2 className="fds-page-title">정책 관리</h2>
+          <p className="fds-page-copy">DB에 저장된 탐지 규칙을 조회하고 활성화 상태를 변경합니다.</p>
         </div>
-        <button onClick={fetchRules} className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-slate-300 rounded-lg border border-slate-700 hover:bg-slate-700 text-sm">
+        <button onClick={fetchRules} className="fds-btn fds-btn-ghost">
           <RefreshCw className={clsx('w-4 h-4', isLoading && 'animate-spin')} />
           새로고침
         </button>
       </div>
 
-      {error && <div className="p-4 rounded-lg border border-red-500/30 bg-red-500/10 text-sm text-red-300">{error}</div>}
+      {error && <div className="fds-error">{error}</div>}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ThresholdCard range="0-30" label="정상" desc="자동 승인" color="text-emerald-400" border="border-emerald-500/30" />
-        <ThresholdCard range="31-60" label="의심" desc="추가 인증 / 검토" color="text-amber-400" border="border-amber-500/30" />
-        <ThresholdCard range="61+" label="위험" desc="거래 보류 또는 차단" color="text-red-400" border="border-red-500/30" />
+      <div className="fds-grid-3">
+        <ThresholdCard range="0-30" label="정상" desc="자동 승인" accent="#00e676" />
+        <ThresholdCard range="31-60" label="의심" desc="추가 인증 / 검토" accent="#f5a623" />
+        <ThresholdCard range="61+" label="위험" desc="거래 보류 또는 차단" accent="#ff2c3d" />
       </div>
 
       <div className="fds-card overflow-hidden">
-        <div className="p-4 bg-slate-900/50 border-b border-slate-700 flex flex-wrap items-center justify-between gap-4">
+        <div className="fds-row-between" style={{ padding: 16, borderBottom: '1px solid var(--border-dim)' }}>
           <div className="flex items-center gap-2 overflow-x-auto">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => toggleCategory(category)}
                 className={clsx(
-                  'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all',
+                  'fds-category-btn',
                   (category === '전체' ? selectedCategories.length === 0 : selectedCategories.includes(category))
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700'
+                    ? 'active'
+                    : ''
                 )}
               >
                 {category}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <div className="fds-row">
+            <div className="fds-search" style={{ minWidth: 210 }}>
+              <Search className="fds-search-icon" />
               <input
                 type="text"
                 placeholder="규칙 검색"
-                className="bg-slate-800 border border-slate-700 rounded-lg py-1.5 pl-9 pr-4 text-xs text-slate-200 focus:outline-none focus:border-blue-500/50"
+                className="fds-input has-icon"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
@@ -113,75 +114,75 @@ const PolicyManagementPage: React.FC = () => {
               onClick={resetFilters}
               disabled={!hasActiveFilters}
               aria-label="필터 초기화"
-              className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-slate-200 disabled:opacity-40 disabled:hover:text-slate-400"
+              className="fds-icon-btn"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="fds-table-wrap">
+          <table className="fds-table">
             <thead>
-              <tr className="border-b border-slate-700 text-slate-500 text-[10px] font-bold uppercase tracking-wider bg-slate-900/30">
-                <th className="py-4 px-6">ID / 코드</th>
-                <th className="py-4 px-6">카테고리</th>
-                <th className="py-4 px-6">탐지 조건</th>
-                <th className="py-4 px-6">점수</th>
-                <th className="py-4 px-6">배포 상태</th>
-                <th className="py-4 px-6">최근 수정</th>
-                <th className="py-4 px-6 text-right">활성화</th>
+              <tr>
+                <th>ID / 코드</th>
+                <th>카테고리</th>
+                <th>탐지 조건</th>
+                <th>점수</th>
+                <th>배포 상태</th>
+                <th>최근 수정</th>
+                <th className="text-right">활성화</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody>
               {filteredRules.map((rule) => (
-                <tr key={rule.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="py-4 px-6">
-                    <span className="block text-sm font-mono text-blue-400 font-bold">{rule.id}</span>
-                    <span className="text-[10px] text-slate-500 mt-1">{rule.code}</span>
+                <tr key={rule.id}>
+                  <td>
+                    <span className="block fds-code">{rule.id.toUpperCase()}</span>
+                    <span className="text-[10px] fds-dim mt-1">{String(rule.code ?? '-').toUpperCase()}</span>
                   </td>
-                  <td className="py-4 px-6 text-sm text-slate-300">{rule.category}</td>
-                  <td className="py-4 px-6 text-sm text-slate-300">{rule.condition}</td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm font-bold text-slate-100">+{rule.score}</span>
+                  <td>{rule.category}</td>
+                  <td>{rule.condition}</td>
+                  <td>
+                    <span style={{ color: 'var(--text-high)', fontWeight: 700 }}>+{rule.score}</span>
                   </td>
-                  <td className="py-4 px-6">
-                    <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">{rule.deploymentStatus}</span>
+                  <td>
+                    <span className="fds-badge fds-badge-normal">{rule.deploymentStatus}</span>
                   </td>
-                  <td className="py-4 px-6">
-                    <span className="block text-[11px] text-slate-300">{rule.lastModifiedBy}</span>
-                    <span className="text-[10px] text-slate-500">{rule.lastModifiedAt}</span>
+                  <td>
+                    <span className="block text-[11px]">{rule.lastModifiedBy.toUpperCase()}</span>
+                    <span className="text-[10px] fds-dim">{rule.lastModifiedAt}</span>
                   </td>
-                  <td className="py-4 px-6 text-right">
-                    <button onClick={() => setSelectedRuleId(rule.id)} className={clsx('transition-all p-1 rounded-full', rule.enabled ? 'text-blue-500 hover:text-blue-400' : 'text-slate-600 hover:text-slate-500')}>
-                      {rule.enabled ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8" />}
+                  <td className="text-right">
+                    <button onClick={() => setSelectedRuleId(rule.id)} className="inline-flex" aria-label="정책 활성화 상태 변경">
+                      <ToggleSwitch enabled={rule.enabled} />
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {filteredRules.length === 0 && <p className="p-10 text-center text-sm text-slate-500">표시할 정책 규칙이 없습니다.</p>}
+          {filteredRules.length === 0 && <p className="fds-empty">// 표시할 데이터가 없습니다</p>}
         </div>
       </div>
 
-      <div className="fds-card p-6">
-        <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
-          <History className="w-4 h-4 text-slate-500" />
+      <div className="fds-card fds-card-pad">
+        <h3 className="fds-panel-title flex items-center gap-2">
+          <History className="w-4 h-4 fds-dim" />
           정책 변경은 DB의 policy_rule_logs에 기록됩니다.
         </h3>
       </div>
 
       {selectedRuleId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setSelectedRuleId(null)} />
-          <div className="relative bg-slate-900 border border-slate-700 rounded-lg w-full max-w-md shadow-2xl p-8">
-            <h4 className="text-xl font-bold text-slate-100 mb-2">정책 변경 확인</h4>
-            <p className="text-slate-400 text-sm mb-6">규칙 활성화 상태를 변경하는 이유를 입력하세요.</p>
-            <textarea className="w-full h-24 bg-slate-800 border border-slate-700 rounded-lg p-4 text-sm text-slate-200 focus:outline-none focus:border-blue-500" value={reason} onChange={(event) => setReason(event.target.value)} />
+        <div className="fds-modal">
+          <div className="fds-modal-backdrop" onClick={() => setSelectedRuleId(null)} />
+          <div className="fds-modal-panel">
+            <h4 className="fds-panel-title">정책 변경 확인</h4>
+            <p className="fds-panel-subtitle" style={{ marginBottom: 18 }}>규칙 활성화 상태를 변경하는 이유를 입력하세요.</p>
+            <textarea className="fds-textarea" value={reason} onChange={(event) => setReason(event.target.value)} />
             <div className="mt-6 flex gap-3">
-              <button onClick={() => setSelectedRuleId(null)} className="flex-1 px-4 py-3 bg-slate-800 text-slate-300 rounded-lg font-semibold">취소</button>
-              <button onClick={confirmToggle} disabled={!reason.trim() || isLoading} className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
+              <button onClick={() => setSelectedRuleId(null)} className="fds-btn fds-btn-ghost flex-1">취소</button>
+              <button onClick={confirmToggle} disabled={!reason.trim() || isLoading} className="fds-btn fds-btn-primary flex-1">
                 {isLoading && <RefreshCw className="w-4 h-4 animate-spin" />}
                 저장
               </button>
@@ -193,12 +194,33 @@ const PolicyManagementPage: React.FC = () => {
   );
 };
 
-const ThresholdCard = ({ range, label, desc, color, border }: { range: string; label: string; desc: string; color: string; border: string }) => (
-  <div className={clsx('fds-card p-4 flex flex-col items-center text-center gap-2', border)}>
-    <span className={clsx('text-lg font-black', color)}>{range}</span>
-    <p className="text-xs font-bold text-slate-200">{label}</p>
-    <p className="text-[10px] text-slate-500 uppercase">{desc}</p>
+const ThresholdCard = ({ range, label, desc, accent }: { range: string; label: string; desc: string; accent: string }) => (
+  <div className="fds-card fds-threshold" style={{ '--accent': accent } as React.CSSProperties}>
+    <span className="fds-threshold-value">{range}</span>
+    <p style={{ margin: '10px 0 0', color: 'var(--text-high)', fontWeight: 700 }}>{label}</p>
+    <p className="fds-page-copy" style={{ marginTop: 6 }}>{desc}</p>
   </div>
+);
+
+const ToggleSwitch = ({ enabled }: { enabled: boolean }) => (
+  <svg width="46" height="24" viewBox="0 0 46 24" aria-hidden="true">
+    <rect
+      x="1"
+      y="1"
+      width="44"
+      height="22"
+      rx="2"
+      fill={enabled ? 'rgba(255,44,61,0.12)' : 'rgba(122,138,170,0.08)'}
+      stroke={enabled ? 'rgba(255,44,61,0.36)' : 'rgba(122,138,170,0.22)'}
+    />
+    <circle
+      cx={enabled ? 34 : 12}
+      cy="12"
+      r="7"
+      fill={enabled ? '#ff2c3d' : '#3a4560'}
+      style={{ transition: 'cx 180ms ease, fill 180ms ease' }}
+    />
+  </svg>
 );
 
 export default PolicyManagementPage;

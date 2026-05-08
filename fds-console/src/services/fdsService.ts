@@ -87,6 +87,7 @@ interface BackendCallVerification {
   memo?: string;
   verified_at?: string;
   created_at: string;
+  twilio_call_sid?: string;
 }
 
 function toChannel(type: BackendTransaction['type']): TransactionAlert['channel'] {
@@ -152,6 +153,7 @@ function mapCallVerification(row: BackendCallVerification): CallVerification {
     memo: row.memo || '',
     verifiedAt: row.verified_at ? new Date(row.verified_at).toLocaleString('ko-KR', { hour12: false }) : undefined,
     createdAt: new Date(row.created_at).toLocaleString('ko-KR', { hour12: false }),
+    twilioCallSid: row.twilio_call_sid,
   };
 }
 
@@ -235,15 +237,14 @@ async function request<T>(path: string, options: RequestInit = {}, retry = true)
   return response.json() as Promise<T>;
 }
 
-async function login() {
+export async function login(
+  emailOrUsername: string = ADMIN_EMAIL,
+  password: string = ADMIN_PASSWORD,
+): Promise<{ token: string; user: { id: string; email: string; username: string; role: string } }> {
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      emailOrUsername: ADMIN_EMAIL,
-      password: ADMIN_PASSWORD,
-      deviceId: 'fds-console',
-    }),
+    body: JSON.stringify({ emailOrUsername, password, deviceId: 'fds-console' }),
   });
 
   if (!response.ok) {
@@ -253,6 +254,12 @@ async function login() {
   const data = await response.json();
   tokenCache = data.token;
   localStorage.setItem('fds_token', data.token);
+  return data;
+}
+
+export function logout(): void {
+  localStorage.removeItem('fds_token');
+  tokenCache = null;
 }
 
 async function ensureAuth() {
@@ -340,3 +347,18 @@ export const fdsService = {
     URL.revokeObjectURL(url);
   },
 };
+
+export async function requestArsCall(transactionId: string): Promise<void> {
+  await ensureAuth();
+  await request(`/transactions/${transactionId}/ars-call`, { method: 'POST' });
+}
+
+export async function fetchTransactionSilent(id: string): Promise<TransactionAlert | null> {
+  try {
+    await ensureAuth();
+    const data = await request<{ transaction: BackendTransaction }>(`/admin/transactions/${id}`);
+    return mapTransaction(data.transaction);
+  } catch {
+    return null;
+  }
+}
