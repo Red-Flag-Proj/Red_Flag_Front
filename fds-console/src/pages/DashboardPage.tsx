@@ -4,6 +4,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, type TooltipContentP
 import { Activity, AlertTriangle, RefreshCw, ShieldOff, UserCheck, type LucideIcon } from 'lucide-react';
 import { useFdsStore } from '../store/useFdsStore';
 import { RiskBadge, StatusBadge } from '../components/common/Badge';
+import { fdsService, type SimulationScenario } from '../services/fdsService';
 
 type RiskDistributionItem = {
   name: string;
@@ -47,10 +48,57 @@ const RiskChartTooltip = ({ active, payload }: TooltipContentProps<number, strin
 
 const DashboardPage: React.FC = () => {
   const { transactions, stats, isLoading, error, fetchDashboard } = useFdsStore();
+  const [simLoading, setSimLoading] = React.useState(false);
+  const [simResult, setSimResult] = React.useState<{ ok: boolean; message: string; txId?: string } | null>(null);
 
   React.useEffect(() => {
-    fetchDashboard();
+    void fetchDashboard();
+
+    let isPolling = false;
+    const intervalId = window.setInterval(async () => {
+      if (isPolling) {
+        return;
+      }
+
+      isPolling = true;
+      try {
+        await fetchDashboard({ silent: true });
+      } finally {
+        isPolling = false;
+      }
+    }, 3000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
   }, [fetchDashboard]);
+
+  const handleSimulate = async () => {
+    setSimLoading(true);
+    setSimResult(null);
+    const scenario: SimulationScenario = {
+      label: '이상거래 발생',
+      customerRef: 'DEV-CUST-001',
+      customerName: '이신우',
+      phoneNumber: '+821065051822',
+      type: 'TRANSFER',
+      amount: 50000000,
+      occurredAt: new Date().toISOString(),
+      countryCode: 'KR',
+      deviceId: `FRAUD-DEVICE-${Date.now()}`,
+      paymentMethod: 'WIRE',
+    };
+    try {
+      const tx = await fdsService.createSimulatedTransaction(scenario);
+      setSimResult({ ok: true, message: `거래 생성 완료! 이신우 / 50,000,000원 / 위험점수: ${tx.riskScore}점 — ARS 발신 중... 📱`, txId: tx.id });
+      await fetchDashboard();
+    } catch (e) {
+      setSimResult({ ok: false, message: `거래 생성 실패: ${e instanceof Error ? e.message : '알 수 없는 오류'}` });
+    } finally {
+      setSimLoading(false);
+      setTimeout(() => setSimResult(null), 4000);
+    }
+  };
 
   const distributionData: RiskDistributionItem[] = [
     { name: '정상', value: stats.normalCount, color: '#00e676' },
@@ -66,14 +114,39 @@ const DashboardPage: React.FC = () => {
           <h2 className="fds-page-title">FDS 관리자 대시보드</h2>
           <p className="fds-page-copy">고객 거래를 실시간 평가하고 자동 조치 및 관리자 대응 상태를 확인합니다.</p>
         </div>
-        <button
-          onClick={() => fetchDashboard()}
-          className="fds-btn fds-btn-ghost"
-        >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          새로고침
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => fetchDashboard()}
+            className="fds-btn fds-btn-ghost"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            새로고침
+          </button>
+          <button
+            onClick={handleSimulate}
+            disabled={simLoading}
+            className="fds-btn fds-btn-ghost disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {simLoading ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <AlertTriangle className="w-4 h-4" />
+            )}
+            이상거래 발생
+          </button>
+        </div>
       </div>
+
+      {simResult && (
+        <div className={`flex items-center justify-between px-4 py-3 rounded-lg border text-sm font-medium ${simResult.ok ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
+          <span>{simResult.message}</span>
+          {simResult.ok && simResult.txId && (
+            <Link to={`/alerts/${simResult.txId}`} className="ml-4 text-slate-200 hover:text-white underline whitespace-nowrap">
+              거래 상세 보기 →
+            </Link>
+          )}
+        </div>
+      )}
 
       {error && <div className="fds-error">{error}</div>}
 

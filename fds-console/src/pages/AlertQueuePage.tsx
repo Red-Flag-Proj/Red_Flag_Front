@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, CreditCard, Download, Filter, PhoneCall, RefreshCw, Search, Send, Smartphone, Wallet } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -55,19 +55,31 @@ const AlertQueuePage: React.FC = () => {
   const urlSearchTerm = searchParams.get('search') ?? '';
   const urlStatusFilter = getStatusFilter(searchParams.get('status'));
   const urlRiskFilter = getRiskFilter(searchParams.get('risk'));
-  const [searchTerm, setSearchTerm] = useState(urlSearchTerm);
-  const [statusFilter, setStatusFilter] = useState<'ALL' | TransactionStatus>(urlStatusFilter);
-  const [riskFilter, setRiskFilter] = useState<'ALL' | RiskLevel>(urlRiskFilter);
+  const searchTerm = urlSearchTerm;
+  const statusFilter = urlStatusFilter;
+  const riskFilter = urlRiskFilter;
 
   React.useEffect(() => {
-    fetchTransactions();
+    void fetchTransactions();
+
+    let isPolling = false;
+    const intervalId = window.setInterval(async () => {
+      if (isPolling) {
+        return;
+      }
+
+      isPolling = true;
+      try {
+        await fetchTransactions({ silent: true });
+      } finally {
+        isPolling = false;
+      }
+    }, 3000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
   }, [fetchTransactions]);
-
-  React.useEffect(() => {
-    setSearchTerm(urlSearchTerm);
-    setStatusFilter(urlStatusFilter);
-    setRiskFilter(urlRiskFilter);
-  }, [urlRiskFilter, urlSearchTerm, urlStatusFilter]);
 
   const updateFilterParam = (key: string, value: string) => {
     const nextSearchParams = new URLSearchParams(searchParams);
@@ -84,21 +96,18 @@ const AlertQueuePage: React.FC = () => {
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextSearchTerm = event.target.value;
 
-    setSearchTerm(nextSearchTerm);
     updateFilterParam('search', nextSearchTerm);
   };
 
   const handleStatusFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const nextStatusFilter = event.target.value as 'ALL' | TransactionStatus;
 
-    setStatusFilter(nextStatusFilter);
     updateFilterParam('status', nextStatusFilter);
   };
 
   const handleRiskFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const nextRiskFilter = event.target.value as 'ALL' | RiskLevel;
 
-    setRiskFilter(nextRiskFilter);
     updateFilterParam('risk', nextRiskFilter);
   };
 
@@ -119,7 +128,7 @@ const AlertQueuePage: React.FC = () => {
           <p className="fds-page-copy">위험 점수와 조치 상태를 기준으로 검토할 거래를 확인합니다.</p>
         </div>
         <div className="fds-row">
-          <button onClick={fetchTransactions} className="fds-btn fds-btn-ghost">
+          <button onClick={() => fetchTransactions()} className="fds-btn fds-btn-ghost">
             <RefreshCw className={clsx('w-4 h-4', isLoading && 'animate-spin')} />
             새로고침
           </button>

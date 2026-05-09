@@ -1,6 +1,5 @@
-import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
-import { Sidebar } from '../components/layout/Sidebar';
-import { Header } from '../components/layout/Header';
+import { createBrowserRouter } from 'react-router-dom';
+import { Layout, ProtectedRoute } from './AppShell';
 import DashboardPage from '../pages/DashboardPage';
 import AlertQueuePage from '../pages/AlertQueuePage';
 import TransactionDetailPage from '../pages/TransactionDetailPage';
@@ -8,24 +7,6 @@ import PolicyManagementPage from '../pages/PolicyManagementPage';
 import AuditLogPage from '../pages/AuditLogPage';
 import ReportsPage from '../pages/ReportsPage';
 import LoginPage from '../pages/LoginPage';
-
-function ProtectedRoute() {
-  const token = localStorage.getItem('fds_token');
-  if (!token) return <Navigate to="/login" replace />;
-  return <Outlet />;
-}
-
-const Layout = () => (
-  <div className="fds-shell">
-    <Sidebar />
-    <div className="fds-content">
-      <Header />
-      <main className="fds-main">
-        <Outlet />
-      </main>
-    </div>
-  </div>
-);
 
 export const router = createBrowserRouter([
   {

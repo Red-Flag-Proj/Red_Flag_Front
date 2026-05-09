@@ -9,6 +9,10 @@ interface CurrentUser {
   role: string;
 }
 
+interface FetchOptions {
+  silent?: boolean;
+}
+
 interface FdsState {
   transactions: TransactionAlert[];
   selectedTransaction?: TransactionAlert;
@@ -20,8 +24,8 @@ interface FdsState {
   arsPollingId: number | null;
   currentUser: CurrentUser | null;
   isAuthenticated: boolean;
-  fetchDashboard: () => Promise<void>;
-  fetchTransactions: () => Promise<void>;
+  fetchDashboard: (options?: FetchOptions) => Promise<void>;
+  fetchTransactions: (options?: FetchOptions) => Promise<void>;
   fetchTransactionDetail: (id: string) => Promise<void>;
   fetchRules: () => Promise<void>;
   applyAdminAction: (id: string, action: AdminAction, memo: string) => Promise<void>;
@@ -72,27 +76,35 @@ export const useFdsStore = create<FdsState>((set, get) => ({
   currentUser: null,
   isAuthenticated: !!localStorage.getItem('fds_token'),
 
-  fetchDashboard: async () => {
-    set({ isLoading: true, error: undefined });
+  fetchDashboard: async (options) => {
+    if (!options?.silent) {
+      set({ isLoading: true, error: undefined });
+    }
     try {
       const [stats, transactions] = await Promise.all([
         fdsService.getDashboardStats(),
         fdsService.getTransactions(),
       ]);
       const auditLogs = await fdsService.getAuditLogs(transactions.slice(0, 20));
-      set({ stats, transactions, auditLogs, isLoading: false });
+      set({ stats, transactions, auditLogs, error: undefined, ...(options?.silent ? {} : { isLoading: false }) });
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : '데이터 조회 실패', isLoading: false });
+      if (!options?.silent) {
+        set({ error: error instanceof Error ? error.message : '데이터 조회 실패', isLoading: false });
+      }
     }
   },
 
-  fetchTransactions: async () => {
-    set({ isLoading: true, error: undefined });
+  fetchTransactions: async (options) => {
+    if (!options?.silent) {
+      set({ isLoading: true, error: undefined });
+    }
     try {
       const transactions = await fdsService.getTransactions();
-      set({ transactions, isLoading: false });
+      set({ transactions, error: undefined, ...(options?.silent ? {} : { isLoading: false }) });
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : '거래 목록 조회 실패', isLoading: false });
+      if (!options?.silent) {
+        set({ error: error instanceof Error ? error.message : '거래 목록 조회 실패', isLoading: false });
+      }
     }
   },
 

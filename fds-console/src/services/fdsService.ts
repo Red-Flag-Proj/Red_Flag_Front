@@ -268,6 +268,22 @@ async function ensureAuth() {
   }
 }
 
+export interface SimulationScenario {
+  label: string;
+  customerRef: string;
+  customerName: string;
+  phoneNumber: string;
+  type: 'TRANSFER' | 'PAYMENT' | 'WITHDRAWAL';
+  amount: number;
+  occurredAt: string;
+  countryCode: string;
+  deviceId?: string;
+  paymentMethod?: string;
+  merchantCategory?: string;
+  city?: string;
+  ipAddress?: string;
+}
+
 export const fdsService = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     await ensureAuth();
@@ -328,6 +344,15 @@ export const fdsService = {
   getAuditLogs: async (transactions: TransactionAlert[]): Promise<AuditLog[]> => {
     const detailRows = await Promise.all(transactions.map((item) => fdsService.getTransactionById(item.id)));
     return detailRows.flatMap((item) => (item.actionLogs ?? []).map(mapAuditLog));
+  },
+
+  createSimulatedTransaction: async (scenario: SimulationScenario): Promise<TransactionAlert> => {
+    await ensureAuth();
+    const data = await request<{ transaction: BackendTransaction }>('/admin/transactions', {
+      method: 'POST',
+      body: JSON.stringify(scenario),
+    });
+    return mapTransaction(data.transaction);
   },
 
   downloadReport: async (format: 'csv' | 'pdf') => {
