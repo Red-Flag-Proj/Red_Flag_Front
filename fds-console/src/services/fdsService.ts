@@ -3,6 +3,7 @@ import type { ActionLog, AdminAction, AuditLog, CallVerification, DashboardStats
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL ?? 'admin@fds.local';
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD ?? 'Admin1234!';
+const DATA_SOURCE = import.meta.env.VITE_DATA_SOURCE ?? 'api-demo';
 
 let tokenCache: string | null = localStorage.getItem('fds_token');
 
@@ -22,6 +23,7 @@ interface BackendTransaction {
   type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'PAYMENT';
   amount: string | number;
   occurred_at: string;
+  created_at: string;
   country_code?: string;
   city?: string;
   ip_address?: string;
@@ -184,6 +186,8 @@ function mapTransaction(row: BackendTransaction): TransactionAlert {
     personalScore: Number(row.personal_score ?? 0),
     riskLevel: row.risk_level,
     occurredAt: new Date(row.occurred_at).toLocaleString('ko-KR', { hour12: false }),
+    occurredAtRaw: row.occurred_at,
+    receivedAt: row.created_at,
     primaryReasons: reasons.map((reason) => reason.label),
     reasonDetails: reasons,
     recommendedAction: recommendedAction(row.status),
@@ -268,6 +272,12 @@ async function ensureAuth() {
   }
 }
 
+function withDataSource(path: string): string {
+  if (!DATA_SOURCE) return path;
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}source=${encodeURIComponent(DATA_SOURCE)}`;
+}
+
 export interface SimulationScenario {
   label: string;
   customerRef: string;
@@ -287,13 +297,18 @@ export interface SimulationScenario {
 export const fdsService = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     await ensureAuth();
-    const data = await request<{ stats: Record<string, number | string> }>('/admin/stats');
-    const arsPendingCount = Number(data.stats.call_required_count ?? 0);
+    const data = await request<{ stats: Record<string, number | string> }>(withDataSource('/admin/stats'));
+    const requiresAuthCount = Number(data.stats.requires_auth_count ?? 0);
+    const callRequiredCount = Number(data.stats.call_required_count ?? 0);
     return {
       totalEvaluated: Number(data.stats.total_transactions),
       highRiskCount: Number(data.stats.risky_transactions),
       blockedCount: Number(data.stats.blocked_count),
-      challengeCount: Number(data.stats.requires_auth_count) + arsPendingCount,
+      cardSuspendedCount: Number(data.stats.card_suspended_count ?? 0),
+      requiresAuthCount,
+      callRequiredCount,
+      challengeCount: requiresAuthCount + callRequiredCount,
+      arsPendingCount: callRequiredCount,
       avgRiskScore: Number(data.stats.average_risk_score),
       p95Latency: 128,
       normalCount: Number(data.stats.normal_count),
@@ -301,13 +316,12 @@ export const fdsService = {
       dangerCount: Number(data.stats.danger_count),
       approvedCount: Number(data.stats.approved_count),
       pendingReviewCount: Number(data.stats.pending_review_count),
-      arsPendingCount,
     };
   },
 
   getTransactions: async (): Promise<TransactionAlert[]> => {
     await ensureAuth();
-    const data = await request<{ transactions: BackendTransaction[] }>('/admin/suspicious-transactions');
+    const data = await request<{ transactions: BackendTransaction[] }>(withDataSource('/admin/suspicious-transactions?risk=all'));
     return data.transactions.map(mapTransaction);
   },
 

@@ -5,22 +5,26 @@ import { login } from '../services/fdsService';
 import { useFdsStore } from '../store/useFdsStore';
 import { BrandLogo } from '../components/common/BrandLogo';
 
+const DEFAULT_ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL ?? 'admin@fds.local';
+const DEFAULT_ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD ?? 'Admin1234!';
+const AUTO_LOGIN = import.meta.env.DEV;
+
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { setCurrentUser } = useFdsStore();
-  const [emailOrUsername, setEmailOrUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const [emailOrUsername, setEmailOrUsername] = React.useState(DEFAULT_ADMIN_EMAIL);
+  const [password, setPassword] = React.useState(DEFAULT_ADMIN_PASSWORD);
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState('');
+  const autoLoginStarted = React.useRef(false);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const signIn = React.useCallback(async (nextEmailOrUsername: string, nextPassword: string) => {
     setError('');
     setIsLoading(true);
 
     try {
-      const data = await login(emailOrUsername, password);
+      const data = await login(nextEmailOrUsername, nextPassword);
 
       if (data.user.role !== 'ADMIN') {
         localStorage.removeItem('fds_token');
@@ -36,6 +40,17 @@ const LoginPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  }, [navigate, setCurrentUser]);
+
+  React.useEffect(() => {
+    if (!AUTO_LOGIN || autoLoginStarted.current || localStorage.getItem('fds_token')) return;
+    autoLoginStarted.current = true;
+    void signIn(DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD);
+  }, [signIn]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await signIn(emailOrUsername, password);
   };
 
   return (

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -443,7 +443,7 @@ button:disabled {
 
 .fds-grid-5 {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -959,6 +959,169 @@ button:disabled {
   align-items: start;
 }
 
+.fds-flow-stage {
+  margin-bottom: 12px;
+}
+
+.fds-flow-shell {
+  padding: 8px 10px 10px;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(16, 185, 129, 0.08), transparent 34%),
+    radial-gradient(circle at 84% 28%, rgba(239, 68, 68, 0.06), transparent 28%),
+    linear-gradient(180deg, #fcfdfd, #f5f8f7);
+}
+
+.fds-flow-hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fds-flow-board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  border: 1px solid rgba(0, 107, 58, 0.12);
+  border-radius: 10px;
+  padding: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(244, 250, 247, 0.96));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85),
+    inset 0 -10px 18px rgba(7, 29, 18, 0.03);
+}
+
+.fds-flow-board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.24), transparent);
+  opacity: 0.35;
+  pointer-events: none;
+  transform: translateX(-30%);
+  animation: flowSheen 7.5s ease-in-out infinite;
+}
+
+.fds-flow-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 72px;
+  gap: 10px;
+  align-items: center;
+}
+
+.fds-flow-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fds-flow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.02);
+}
+
+.fds-flow-track {
+  position: relative;
+  height: 14px;
+  overflow: hidden;
+  border: 1px solid #dfe7e3;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.015)),
+    #f8fbfa;
+}
+
+.fds-flow-track-grid {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0 18%, rgba(255, 255, 255, 0.4) 18% 18.7%, transparent 18.7% 36%, rgba(255, 255, 255, 0.4) 36% 36.7%, transparent 36.7% 54%, rgba(255, 255, 255, 0.4) 54% 54.7%, transparent 54.7% 72%, rgba(255, 255, 255, 0.4) 72% 72.7%, transparent 72.7% 90%, rgba(255, 255, 255, 0.4) 90% 90.7%, transparent 90.7%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.fds-flow-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 260ms ease;
+  box-shadow:
+    0 0 14px rgba(16, 185, 129, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.fds-flow-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px;
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.fds-flow-meta strong {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.fds-flow-meta span {
+  color: var(--text-muted);
+}
+
+.fds-flow-foot,
+.fds-radar-legend {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.fds-flow-foot > div,
+.fds-radar-legend-item {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  padding: 8px 10px;
+}
+
+.fds-flow-foot > div {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.fds-flow-foot-label {
+  display: block;
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fds-flow-foot strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
 .fds-alert-panel {
   position: sticky;
   top: 82px;
@@ -993,6 +1156,18 @@ button:disabled {
 .fds-alert-item:hover {
   background: #fafcfa;
   transform: translateY(-1px);
+}
+
+@keyframes flowSheen {
+  0%,
+  100% {
+    transform: translateX(-26%);
+    opacity: 0.22;
+  }
+  50% {
+    transform: translateX(18%);
+    opacity: 0.44;
+  }
 }
 
 .fds-alert-time {
@@ -1292,6 +1467,15 @@ button:disabled {
   .fds-grid-5 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .fds-flow-foot,
+  .fds-radar-legend {
+    grid-template-columns: 1fr;
+  }
+
+  .fds-flow-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 860px) {
@@ -1371,3 +1555,4 @@ button:disabled {
     padding: 24px;
   }
 }
+

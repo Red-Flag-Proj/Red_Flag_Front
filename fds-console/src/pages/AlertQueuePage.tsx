@@ -6,6 +6,7 @@ import { useFdsStore } from '../store/useFdsStore';
 import { fdsService } from '../services/fdsService';
 import { RiskBadge, StatusBadge } from '../components/common/Badge';
 import type { Channel, RiskLevel, TransactionStatus } from '../types/fds';
+import { formatElapsed, useNowTick } from '../utils/liveTime';
 
 const ChannelIcon = ({ channel }: { channel: Channel }) => {
   switch (channel) {
@@ -61,6 +62,7 @@ const AlertQueuePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { transactions, isLoading, error, fetchTransactions } = useFdsStore();
   const [page, setPage] = React.useState(1);
+  const now = useNowTick();
 
   const searchTerm = searchParams.get('search') ?? '';
   const statusFilter = getStatusFilter(searchParams.get('status'));
@@ -189,7 +191,7 @@ const AlertQueuePage: React.FC = () => {
             <tbody>
               {pagedTransactions.map((item) => (
                 <tr key={item.id} className="cursor-pointer" onClick={() => navigate(`/alerts/${item.id}`)}>
-                  <td className="fds-muted">{item.occurredAt}</td>
+                  <td className="fds-muted" title={item.occurredAt}>{formatElapsed(item.receivedAt, now)}</td>
                   <td><span className="fds-code">{item.id.slice(0, 14).toUpperCase()}</span></td>
                   <td>{item.customerId}</td>
                   <td>

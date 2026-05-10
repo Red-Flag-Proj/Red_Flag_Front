@@ -58,6 +58,8 @@ export interface TransactionAlert {
   personalScore: number;
   riskLevel: RiskLevel;
   occurredAt: string;
+  occurredAtRaw: string;
+  receivedAt: string;
   primaryReasons: string[];
   reasonDetails: RiskReason[];
   recommendedAction: string;
@@ -105,6 +107,9 @@ export interface DashboardStats {
   totalEvaluated: number;
   highRiskCount: number;
   blockedCount: number;
+  cardSuspendedCount: number;
+  requiresAuthCount: number;
+  callRequiredCount: number;
   challengeCount: number;
   arsPendingCount: number;
   avgRiskScore: number;
