@@ -21,8 +21,8 @@ export const RiskBadge: React.FC<{ level: RiskLevel }> = ({ level }) => {
   };
 
   const labels: Record<RiskLevel, string> = {
-    NORMAL: '정상',
-    SUSPICIOUS: '의심',
+    NORMAL: '낮음',
+    SUSPICIOUS: '높음',
     DANGER: '위험',
   };
 
@@ -32,9 +32,9 @@ export const RiskBadge: React.FC<{ level: RiskLevel }> = ({ level }) => {
 export const StatusBadge: React.FC<{ status: TransactionStatus }> = ({ status }) => {
   const styles: Record<TransactionStatus, string> = {
     APPROVED: 'fds-badge-normal',
-    PENDING_REVIEW: 'fds-badge-blue',
+    PENDING_REVIEW: 'fds-badge-suspicious',
     REQUIRES_AUTH: 'fds-badge-blue',
-    CALL_REQUIRED: 'fds-badge-suspicious',
+    CALL_REQUIRED: 'fds-badge-yellow',
     CALL_IN_PROGRESS: 'fds-badge-blue fds-badge-pulse',
     CALL_CONFIRMED: 'fds-badge-normal',
     BLOCKED: 'fds-badge-danger',
@@ -43,7 +43,7 @@ export const StatusBadge: React.FC<{ status: TransactionStatus }> = ({ status })
 
   const labels: Record<TransactionStatus, string> = {
     APPROVED: '승인',
-    PENDING_REVIEW: '보류',
+    PENDING_REVIEW: '검토 대기',
     REQUIRES_AUTH: '추가 인증',
     CALL_REQUIRED: 'ARS 확인 대기',
     CALL_IN_PROGRESS: 'ARS 진행 중',

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronRight, CreditCard, Download, Filter, PhoneCall, RefreshCw, Search, Send, Smartphone, Wallet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CreditCard, Download, Filter, PhoneCall, RefreshCw, RotateCcw, Search, Send, Smartphone, Wallet } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useFdsStore } from '../store/useFdsStore';
 import { fdsService } from '../services/fdsService';
@@ -9,10 +9,10 @@ import type { Channel, RiskLevel, TransactionStatus } from '../types/fds';
 
 const ChannelIcon = ({ channel }: { channel: Channel }) => {
   switch (channel) {
-    case 'CARD': return <CreditCard className="w-4 h-4" />;
-    case 'TRANSFER': return <Send className="w-4 h-4" />;
-    case 'E-PAY': return <Wallet className="w-4 h-4" />;
-    case 'WITHDRAWAL': return <Smartphone className="w-4 h-4" />;
+    case 'CARD': return <CreditCard className="h-4 w-4" />;
+    case 'TRANSFER': return <Send className="h-4 w-4" />;
+    case 'E-PAY': return <Wallet className="h-4 w-4" />;
+    case 'WITHDRAWAL': return <Smartphone className="h-4 w-4" />;
   }
 };
 
@@ -40,6 +40,12 @@ const statusLabels: Record<TransactionStatus, string> = {
   CARD_SUSPENDED: '카드 정지',
 };
 
+const riskLabels: Record<RiskLevel, string> = {
+  NORMAL: '낮음',
+  SUSPICIOUS: '높음',
+  DANGER: '위험',
+};
+
 function getStatusFilter(value: string | null): 'ALL' | TransactionStatus {
   return transactionStatuses.includes(value as TransactionStatus) ? value as TransactionStatus : 'ALL';
 }
@@ -48,26 +54,24 @@ function getRiskFilter(value: string | null): 'ALL' | RiskLevel {
   return riskLevels.includes(value as RiskLevel) ? value as RiskLevel : 'ALL';
 }
 
+const pageSize = 10;
+
 const AlertQueuePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { transactions, isLoading, error, fetchTransactions } = useFdsStore();
-  const urlSearchTerm = searchParams.get('search') ?? '';
-  const urlStatusFilter = getStatusFilter(searchParams.get('status'));
-  const urlRiskFilter = getRiskFilter(searchParams.get('risk'));
-  const searchTerm = urlSearchTerm;
-  const statusFilter = urlStatusFilter;
-  const riskFilter = urlRiskFilter;
+  const [page, setPage] = React.useState(1);
+
+  const searchTerm = searchParams.get('search') ?? '';
+  const statusFilter = getStatusFilter(searchParams.get('status'));
+  const riskFilter = getRiskFilter(searchParams.get('risk'));
 
   React.useEffect(() => {
     void fetchTransactions();
 
     let isPolling = false;
     const intervalId = window.setInterval(async () => {
-      if (isPolling) {
-        return;
-      }
-
+      if (isPolling) return;
       isPolling = true;
       try {
         await fetchTransactions({ silent: true });
@@ -76,101 +80,92 @@ const AlertQueuePage: React.FC = () => {
       }
     }, 3000);
 
-    return () => {
-      window.clearInterval(intervalId);
-    };
+    return () => window.clearInterval(intervalId);
   }, [fetchTransactions]);
 
   const updateFilterParam = (key: string, value: string) => {
+    setPage(1);
     const nextSearchParams = new URLSearchParams(searchParams);
-
     if (value === 'ALL' || !value.trim()) {
       nextSearchParams.delete(key);
     } else {
       nextSearchParams.set(key, value);
     }
-
     setSearchParams(nextSearchParams, { replace: true });
   };
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const nextSearchTerm = event.target.value;
-
-    updateFilterParam('search', nextSearchTerm);
-  };
-
-  const handleStatusFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextStatusFilter = event.target.value as 'ALL' | TransactionStatus;
-
-    updateFilterParam('status', nextStatusFilter);
-  };
-
-  const handleRiskFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextRiskFilter = event.target.value as 'ALL' | RiskLevel;
-
-    updateFilterParam('risk', nextRiskFilter);
+  const resetFilters = () => {
+    setPage(1);
+    setSearchParams(new URLSearchParams(), { replace: true });
   };
 
   const filteredTransactions = transactions.filter((item) => {
     const query = searchTerm.toLowerCase();
-    const matchesSearch = item.id.toLowerCase().includes(query) || item.customerId.toLowerCase().includes(query);
+    const matchesSearch = !query
+      || item.id.toLowerCase().includes(query)
+      || item.customerId.toLowerCase().includes(query)
+      || item.account.toLowerCase().includes(query)
+      || String(item.amount).includes(query);
     const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
     const matchesRisk = riskFilter === 'ALL' || item.riskLevel === riskFilter;
     return matchesSearch && matchesStatus && matchesRisk;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedTransactions = filteredTransactions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="fds-page-stack">
       <div className="fds-page-head">
         <div>
-          {/* <p className="fds-kicker">// 의심 거래 큐</p> */}
-          <h2 className="fds-page-title">의심 거래 큐</h2>
-          <p className="fds-page-copy">위험 점수와 조치 상태를 기준으로 검토할 거래를 확인합니다.</p>
+          <h2 className="fds-page-title">의심 거래</h2>
+          <p className="fds-page-copy">의심 거래 목록 및 관리</p>
         </div>
         <div className="fds-row">
           <button onClick={() => fetchTransactions()} className="fds-btn fds-btn-ghost">
-            <RefreshCw className={clsx('w-4 h-4', isLoading && 'animate-spin')} />
+            <RefreshCw className={clsx('h-4 w-4', isLoading && 'animate-spin')} />
             새로고침
           </button>
-          <button onClick={() => fdsService.downloadReport('csv')} className="fds-btn fds-btn-danger">
-            <Download className="w-4 h-4" />
-            CSV
+          <button onClick={() => fdsService.downloadReport('csv')} className="fds-btn fds-btn-primary">
+            <Download className="h-4 w-4" />
+            내보내기
           </button>
         </div>
       </div>
 
       {error && <div className="fds-error">{error}</div>}
 
-      <div className="fds-card fds-card-pad">
-        <div className="fds-form-row">
-        <div className="fds-search">
-          <Search className="fds-search-icon" />
-          <input
-            type="text"
-            placeholder="거래 ID 또는 사용자 검색"
-            className="fds-input has-icon"
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
-        </div>
-        <div className="fds-row">
-          <Filter className="w-4 h-4 fds-dim" />
-          <select className="fds-select" value={statusFilter} onChange={handleStatusFilterChange}>
-            <option value="ALL">전체 상태</option>
-            {transactionStatuses.map((status) => (
-              <option key={status} value={status}>{statusLabels[status]}</option>
-            ))}
-          </select>
-          <select className="fds-select" value={riskFilter} onChange={handleRiskFilterChange}>
-            <option value="ALL">전체 위험도</option>
-            <option value="NORMAL">정상</option>
-            <option value="SUSPICIOUS">의심</option>
-            <option value="DANGER">위험</option>
-          </select>
-        </div>
-        <span className="fds-kicker" style={{ margin: 0, marginLeft: 'auto', color: 'var(--text-low)' }}>
-          {filteredTransactions.length} / {transactions.length} 건
-        </span>
+      <div className="fds-card fds-filter-card">
+        <div className="fds-alert-filter-row">
+          <div className="fds-search fds-alert-search">
+            <Search className="fds-search-icon" />
+            <input
+              type="text"
+              placeholder="검색 (거래 ID, 고객명, 계좌, 금액)"
+              className="fds-input has-icon"
+              value={searchTerm}
+              onChange={(event) => updateFilterParam('search', event.target.value)}
+            />
+          </div>
+          <div className="fds-alert-filter-controls">
+            <Filter className="h-4 w-4 fds-dim" />
+            <select className="fds-select" value={statusFilter} onChange={(event) => updateFilterParam('status', event.target.value)}>
+              <option value="ALL">상태: 전체</option>
+              {transactionStatuses.map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
+            </select>
+            <select className="fds-select" value={riskFilter} onChange={(event) => updateFilterParam('risk', event.target.value)}>
+              <option value="ALL">위험 등급: 전체</option>
+              {riskLevels.map((risk) => <option key={risk} value={risk}>{riskLabels[risk]}</option>)}
+            </select>
+            <button type="button" onClick={resetFilters} className="fds-btn fds-btn-ghost">
+              <RotateCcw className="h-4 w-4" />
+              필터 초기화
+            </button>
+            <span className="fds-alert-filter-count">
+              {filteredTransactions.length} / {transactions.length} 건
+            </span>
+          </div>
         </div>
       </div>
 
@@ -179,64 +174,68 @@ const AlertQueuePage: React.FC = () => {
           <table className="fds-table">
             <thead>
               <tr>
-                <th>거래 ID / 시간</th>
-                <th>사용자</th>
-                <th>채널 / 위치</th>
+                <th>시간</th>
+                <th>거래 ID</th>
+                <th>고객명</th>
+                <th>거래 유형</th>
                 <th>금액</th>
-                <th>점수</th>
-                <th>위험도</th>
+                <th>위험 점수</th>
+                <th>위험 등급</th>
                 <th>상태</th>
+                <th>처리자</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map((item) => (
-                <tr key={item.id} className="cursor-pointer group" onClick={() => navigate(`/alerts/${item.id}`)}>
-                  <td>
-                    <span className="block fds-code">{item.id.slice(0, 8).toUpperCase()}</span>
-                    <span className="text-[10px] fds-dim">{item.occurredAt}</span>
-                  </td>
-                  <td>{item.customerId.toUpperCase()}</td>
+              {pagedTransactions.map((item) => (
+                <tr key={item.id} className="cursor-pointer" onClick={() => navigate(`/alerts/${item.id}`)}>
+                  <td className="fds-muted">{item.occurredAt}</td>
+                  <td><span className="fds-code">{item.id.slice(0, 14).toUpperCase()}</span></td>
+                  <td>{item.customerId}</td>
                   <td>
                     <div className="flex items-center gap-2">
-                      <div className="fds-icon-btn" style={{ width: 28, height: 28 }}><ChannelIcon channel={item.channel} /></div>
-                      <span className="fds-muted">{item.countryCode.toUpperCase()} / {item.city}</span>
+                      <span className="fds-icon-btn !h-7 !w-7"><ChannelIcon channel={item.channel} /></span>
+                      <span>{item.channel}</span>
                     </div>
                   </td>
-                  <td style={{ color: 'var(--text-high)', fontWeight: 600 }}>{item.amount.toLocaleString()}원</td>
-                  <td>
-                    <div className="flex items-center gap-3 w-32">
-                      <div className="fds-gauge flex-1">
-                        <div
-                          className="fds-gauge-fill"
-                          style={{
-                            width: `${Math.min(item.riskScore, 100)}%`,
-                            background: item.riskScore >= 61 ? 'var(--red-vivid)' : item.riskScore >= 31 ? 'var(--amber)' : 'var(--green)',
-                          }}
-                        />
-                      </div>
-                      <span className="fds-code" style={{ color: 'var(--text-mid)' }}>{item.riskScore}</span>
-                    </div>
-                  </td>
+                  <td className="font-black">₩ {item.amount.toLocaleString()}</td>
+                  <td><span className={clsx('fds-badge', item.riskScore >= 61 ? 'fds-badge-danger' : item.riskScore >= 31 ? 'fds-badge-suspicious' : 'fds-badge-normal')}>{item.riskScore}</span></td>
                   <td><RiskBadge level={item.riskLevel} /></td>
                   <td>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={item.status} />
                       {(item.status === 'CALL_REQUIRED' || item.status === 'CALL_IN_PROGRESS') && (
-                        <span className="fds-badge fds-badge-suspicious fds-badge-pulse flex items-center gap-1">
-                          <PhoneCall className="w-3 h-3" />
+                        <span className="fds-badge fds-badge-yellow flex items-center gap-1">
+                          <PhoneCall className="h-3 w-3" />
                           ARS
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="text-right"><ChevronRight className="w-5 h-5 fds-dim group-hover:text-[var(--red-vivid)]" /></td>
+                  <td className="fds-muted">{item.decidedAction || '-'}</td>
+                  <td className="text-right"><ChevronRight className="h-4 w-4 fds-dim" /></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {filteredTransactions.length === 0 && <div className="fds-empty">// 표시할 데이터가 없습니다</div>}
+        {pagedTransactions.length === 0 && <div className="fds-empty">표시할 데이터가 없습니다.</div>}
+        <div className="fds-pagination">
+          <span className="mr-auto text-[12px] font-bold text-[var(--text-muted)]">
+            {filteredTransactions.length === 0 ? '0' : `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, filteredTransactions.length)}`} / {filteredTransactions.length}
+          </span>
+          <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} aria-label="이전 페이지">
+            <ChevronLeft className="mx-auto h-4 w-4" />
+          </button>
+          {Array.from({ length: Math.min(totalPages, 5) }, (_, index) => index + 1).map((pageNumber) => (
+            <button key={pageNumber} type="button" className={pageNumber === currentPage ? 'active' : ''} onClick={() => setPage(pageNumber)}>
+              {pageNumber}
+            </button>
+          ))}
+          <button type="button" onClick={() => setPage((value) => Math.min(totalPages, value + 1))} aria-label="다음 페이지">
+            <ChevronRight className="mx-auto h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

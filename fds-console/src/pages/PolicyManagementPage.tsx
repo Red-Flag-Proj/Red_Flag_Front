@@ -64,7 +64,7 @@ const PolicyManagementPage: React.FC = () => {
         <div>
           {/* <p className="fds-kicker">// 정책 관리</p> */}
           <h2 className="fds-page-title">정책 관리</h2>
-          <p className="fds-page-copy">DB에 저장된 탐지 규칙을 조회하고 활성화 상태를 변경합니다.</p>
+          <p className="fds-page-copy">탐지 규칙의 위험도, 조건, 배포 상태를 관리합니다.</p>
         </div>
         <button onClick={fetchRules} className="fds-btn fds-btn-ghost">
           <RefreshCw className={clsx('w-4 h-4', isLoading && 'animate-spin')} />
@@ -75,9 +75,9 @@ const PolicyManagementPage: React.FC = () => {
       {error && <div className="fds-error">{error}</div>}
 
       <div className="fds-grid-3">
-        <ThresholdCard range="0-30" label="정상" desc="자동 승인" accent="#00e676" />
-        <ThresholdCard range="31-60" label="의심" desc="추가 인증 / 검토" accent="#f5a623" />
-        <ThresholdCard range="61+" label="위험" desc="거래 보류 또는 차단" accent="#ff2c3d" />
+        <ThresholdCard range="0-30" label="낮음" desc="자동 승인" accent="#10b981" />
+        <ThresholdCard range="31-60" label="보통/높음" desc="추가 인증 또는 검토" accent="#f59e0b" />
+        <ThresholdCard range="61+" label="위험" desc="거래 보류 또는 차단" accent="#ef4444" />
       </div>
 
       <div className="fds-card overflow-hidden">
@@ -147,7 +147,9 @@ const PolicyManagementPage: React.FC = () => {
                     <span style={{ color: 'var(--text-high)', fontWeight: 700 }}>+{rule.score}</span>
                   </td>
                   <td>
-                    <span className="fds-badge fds-badge-normal">{rule.deploymentStatus}</span>
+                    <span className={clsx('fds-badge', rule.deploymentStatus === 'DEPLOYED' ? 'fds-badge-normal' : rule.deploymentStatus === 'PENDING' ? 'fds-badge-yellow' : 'fds-badge-dim')}>
+                      {rule.deploymentStatus}
+                    </span>
                   </td>
                   <td>
                     <span className="block text-[11px]">{rule.lastModifiedBy.toUpperCase()}</span>
@@ -209,15 +211,15 @@ const ToggleSwitch = ({ enabled }: { enabled: boolean }) => (
       y="1"
       width="44"
       height="22"
-      rx="2"
-      fill={enabled ? 'rgba(255,44,61,0.12)' : 'rgba(122,138,170,0.08)'}
-      stroke={enabled ? 'rgba(255,44,61,0.36)' : 'rgba(122,138,170,0.22)'}
+      rx="11"
+      fill={enabled ? '#dff6eb' : '#eef3f0'}
+      stroke={enabled ? '#96ddbc' : '#cbd8d1'}
     />
     <circle
       cx={enabled ? 34 : 12}
       cy="12"
       r="7"
-      fill={enabled ? '#ff2c3d' : '#3a4560'}
+      fill={enabled ? '#008a45' : '#94a39b'}
       style={{ transition: 'cx 180ms ease, fill 180ms ease' }}
     />
   </svg>
