@@ -199,6 +199,32 @@ const DashboardPage: React.FC = () => {
   ];
   const totalDistribution = Math.max(1, stats.totalEvaluated);
 
+  const [currentKstTime, setCurrentKstTime] = React.useState(
+    new Intl.DateTimeFormat('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(new Date())
+  );
+
+  React.useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentKstTime(
+        new Intl.DateTimeFormat('ko-KR', {
+          timeZone: 'Asia/Seoul',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        }).format(new Date())
+      );
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   React.useEffect(() => {
     void fetchDashboard();
 
@@ -374,6 +400,10 @@ const DashboardPage: React.FC = () => {
               })}
             </div>
           </div>
+        </div>
+
+        <div className="text-right text-[11px] font-semibold text-[var(--text-faint)]">
+          최근 업데이트: {currentKstTime} · 데이터 기준: KST
         </div>
       </div>
     </div>

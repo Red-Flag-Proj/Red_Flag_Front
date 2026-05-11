@@ -9,7 +9,6 @@ import {
   Globe,
   Lock,
   MessageSquare,
-  MoreVertical,
   PhoneCall,
   RefreshCw,
   ShieldAlert,
@@ -141,10 +140,6 @@ const TransactionDetailPage: React.FC = () => {
           <button className="fds-btn fds-btn-ghost" disabled={isArsCalling} onClick={callArs}>
             {isArsCalling ? <RefreshCw className="h-4 w-4 animate-spin" /> : <PhoneCall className="h-4 w-4" />}
             ARS 확인
-          </button>
-          <button className="fds-btn fds-btn-ghost" onClick={() => setSelectedAction('HOLD')}>
-            <MoreVertical className="h-4 w-4" />
-            더보기
           </button>
         </div>
       </div>

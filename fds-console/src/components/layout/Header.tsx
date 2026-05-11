@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Bell, ChevronDown, Clock, LogOut, Search } from 'lucide-react';
+import { Bell, Clock, LogOut, Search } from 'lucide-react';
 import { logout } from '../../services/fdsService';
 import { useFdsStore } from '../../store/useFdsStore';
 import { BrandLogo } from '../common/BrandLogo';
@@ -10,8 +10,7 @@ const navItems = [
   { label: '의심 거래', path: '/alerts' },
   { label: '규칙 관리', path: '/policy' },
   { label: '조치 로그', path: '/audit' },
-  { label: '리포트', path: '/reports' },
-  { label: '설정', path: '/policy' },
+  { label: '리포트', path: '/reports' }
 ];
 
 const formatNow = () =>
@@ -188,7 +187,7 @@ export const Header: React.FC = () => {
             <p className="fds-user-name">{currentUser?.username ?? '관리자'}</p>
             <p className="fds-user-role">{currentUser?.role?.toLowerCase() ?? 'admin'}</p>
           </div>
-          <ChevronDown className="h-3 w-3 text-white/80" />
+          {/* <ChevronDown className="h-3 w-3 text-white/80" /> */}
         </div>
 
         <button type="button" onClick={handleLogout} className="fds-icon-btn" aria-label="로그아웃" title="로그아웃">
