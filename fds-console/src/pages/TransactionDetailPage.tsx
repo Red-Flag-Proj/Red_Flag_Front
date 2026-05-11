@@ -192,7 +192,7 @@ const TransactionDetailPage: React.FC = () => {
                       <p className="mt-1 text-[11px] font-semibold text-[var(--text-muted)]">{reason.code}</p>
                     </div>
                   </div>
-                  <span className="font-black text-[var(--danger)]">+{reason.score}</span>
+                  {reason.score > 0 && <span className="font-black text-[var(--danger)]">+{reason.score}</span>}
                 </div>
               )) : <p className="fds-empty">표시할 데이터가 없습니다.</p>}
             </Panel>

@@ -113,8 +113,36 @@ function recommendedAction(status: TransactionAlert['status']) {
   return labels[status];
 }
 
+function hasBrokenKorean(text: string): boolean {
+  return /[�]/.test(text);
+}
+
+function normalizeBrokenReasonLabel(label: string, code: string): string {
+  if (!hasBrokenKorean(label)) return label;
+
+  const zScore = label.match(/z-score\S*\s*([\d.]+)/i)?.[1];
+  if (zScore) return `개인 금액 분포 기준 z-score가 ${zScore}입니다.`;
+
+  if (label.includes('00:00~05:00')) return '00:00~05:00 사이에 발생한 거래';
+  if (label.includes('100') && label.includes('3')) return '100만원 이상이거나 최근/개인 평균 대비 3배 이상인 거래';
+  if (label.includes('8') && !/\d+\.\d+/.test(label)) return '고객의 평균 사용 시간과 8시간 이상 차이';
+
+  const ratio = label.match(/([\d.]+)\D*$/)?.[1] ?? label.match(/([\d.]+)/)?.[1];
+  if (ratio && !label.includes('00:00') && !label.includes('100')) {
+    return `직전 거래 대비 금액이 ${ratio}배 증가했습니다.`;
+  }
+
+  const index = code.match(/_(\d+)$/)?.[1];
+  return index ? `AI 탐지 사유 ${index}` : 'AI 탐지 사유';
+}
+
 function normalizeReasons(reasons: BackendReason[] | undefined): RiskReason[] {
-  return Array.isArray(reasons) ? reasons : [];
+  if (!Array.isArray(reasons)) return [];
+  return reasons.map((reason, index) => ({
+    code: reason.code || `REASON_${index + 1}`,
+    label: normalizeBrokenReasonLabel(String(reason.label || ''), reason.code || ''),
+    score: Number(reason.score ?? 0),
+  }));
 }
 
 function mapActionLog(row: BackendActionLog): ActionLog {
