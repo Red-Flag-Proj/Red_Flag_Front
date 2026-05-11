@@ -176,7 +176,7 @@ const AlertQueuePanel = ({ transactions, now }: { transactions: TransactionAlert
           </span>
         </Link>
       ))}
-      {transactions.length === 0 && <p className="fds-empty">?섏떊 ?湲?以묒엯?덈떎.</p>}
+      {transactions.length === 0 && <p className="fds-empty">수신 대기 중입니다.</p>}
     </div>
 
     <div className="border-t border-[var(--border)] p-4">
